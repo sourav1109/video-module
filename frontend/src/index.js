@@ -12,6 +12,7 @@ import '@fontsource/roboto/700.css';
 
 import App from './App';
 import { VideoCallProvider } from './contexts/VideoCallContext';
+import { UserRoleProvider } from './contexts/UserRoleContext';
 
 // Create Material-UI theme
 const theme = createTheme({
@@ -75,21 +76,23 @@ root.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
-        <VideoCallProvider>
-          <App />
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
-        </VideoCallProvider>
+        <UserRoleProvider>
+          <VideoCallProvider>
+            <App />
+            <ToastContainer
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+          </VideoCallProvider>
+        </UserRoleProvider>
       </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>

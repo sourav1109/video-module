@@ -42,8 +42,9 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import ScheduleLiveClassDialog from './ScheduleLiveClassDialog';
-import liveClassAPI from '../../api/liveClassApi';
+import liveClassAPI from '../api/liveClassApi';
 
 const TeacherLiveClassDashboard = ({ token, user }) => {
   console.log('🚨 TEACHER LIVE CLASS DASHBOARD COMPONENT LOADED!!! 🚨');
@@ -121,23 +122,46 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
   }, [authToken]);
 
   // Handle class scheduling
-  const handleClassScheduled = (newClass) => {
-    setClasses(prev => [newClass, ...prev]);
-    setStats(prev => ({
-      ...prev,
-      total: prev.total + 1,
-      upcoming: prev.upcoming + 1
-    }));
+  const handleClassScheduled = async (classData) => {
+    try {
+      console.log('📝 Scheduling class:', classData);
+      
+      // Call API to schedule the class
+      const scheduledClass = await liveClassAPI.scheduleClass({
+        title: classData.title,
+        description: classData.description,
+        scheduledStart: classData.scheduledStart,  // Changed from scheduledStartTime
+        scheduledEnd: classData.scheduledEnd,      // Changed from scheduledEndTime
+        maxParticipants: classData.maxParticipants,
+        recordingEnabled: classData.recordingEnabled,
+        whiteboardEnabled: classData.whiteboardEnabled,
+        chatEnabled: classData.chatEnabled,
+        pollsEnabled: classData.pollsEnabled
+      });
+      
+      console.log('✅ Class scheduled successfully:', scheduledClass);
+      
+      // Reload classes to get updated list
+      await loadClasses();
+      
+      // Show success message
+      toast.success('Class scheduled successfully!');
+      
+    } catch (error) {
+      console.error('❌ Error scheduling class:', error);
+      toast.error(error.response?.data?.message || 'Failed to schedule class');
+      throw error;
+    }
   };
 
   // Start a class - Navigate to ScalableLiveClassRoom
   const handleStartClass = async (classItem) => {
     try {
-      await liveClassAPI.startClass(classItem._id, authToken);
+      await liveClassAPI.startClass(classItem.id, authToken);
       
       // Update class status
       setClasses(prev => prev.map(cls => 
-        cls._id === classItem._id 
+        cls.id === classItem.id 
           ? { ...cls, status: 'live' }
           : cls
       ));
@@ -149,7 +173,7 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
       }));
       
       // Navigate to scalable live class room
-      navigate(`/teacher/live-class/${classItem._id}`);
+      navigate(`/teacher/live-class/${classItem.id}`);
       
     } catch (err) {
       setError(err.message);
@@ -158,17 +182,17 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
 
   // Join live class - Navigate to ScalableLiveClassRoom
   const handleJoinClass = (classItem) => {
-    navigate(`/teacher/live-class/${classItem._id}`);
+    navigate(`/teacher/live-class/${classItem.id}`);
   };
 
   // End a class
   const handleEndClass = async (classItem) => {
     try {
-      await liveClassAPI.endClass(classItem._id, authToken);
+      await liveClassAPI.endClass(classItem.id, authToken);
       
       // Update class status
       setClasses(prev => prev.map(cls => 
-        cls._id === classItem._id 
+        cls.id === classItem.id 
           ? { ...cls, status: 'completed' }
           : cls
       ));
@@ -187,10 +211,10 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
   // Delete a class
   const handleDeleteClass = async () => {
     try {
-      await liveClassAPI.deleteClass(selectedClass._id, authToken);
+      await liveClassAPI.deleteClass(selectedClass.id, authToken);
       
       // Remove class from list
-      setClasses(prev => prev.filter(cls => cls._id !== selectedClass._id));
+      setClasses(prev => prev.filter(cls => cls.id !== selectedClass.id));
       
       setStats(prev => ({
         ...prev,
@@ -430,7 +454,7 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
               </TableRow>
             ) : (
               getFilteredClasses().map((classItem) => (
-                <TableRow key={classItem._id}>
+                <TableRow key={classItem.id}>
                   <TableCell>
                     <Box>
                       <Typography variant="subtitle2" fontWeight="bold">
@@ -456,15 +480,19 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {format(new Date(classItem.scheduledAt), 'MMM dd, yyyy')}
+                      {classItem.scheduled_start_time ? 
+                        format(new Date(classItem.scheduled_start_time), 'MMM dd, yyyy') : 
+                        'N/A'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {format(new Date(classItem.scheduledAt), 'hh:mm a')}
+                      {classItem.scheduled_start_time ? 
+                        format(new Date(classItem.scheduled_start_time), 'hh:mm a') : 
+                        ''}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {classItem.duration} min
+                      {classItem.duration_minutes || 'N/A'} min
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -479,7 +507,7 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <PeopleIcon fontSize="small" sx={{ mr: 1 }} />
                       <Typography variant="body2">
-                        {classItem.currentParticipants || 0}
+                        {classItem.current_students || 0} / {classItem.max_students || 500}
                       </Typography>
                     </Box>
                   </TableCell>

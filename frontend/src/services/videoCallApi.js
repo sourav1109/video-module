@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // API utility for live classes
 class LiveClassAPI {
   constructor() {
-    this.baseURL = `${API_BASE_URL}/api/live-classes`;
+    this.baseURL = `${API_BASE_URL}/api/video-call`;
   }
 
   // Get authorization headers
@@ -22,7 +22,7 @@ class LiveClassAPI {
   async scheduleClass(classData, token) {
     try {
       const response = await axios.post(
-        `${this.baseURL}/schedule`,
+        `${this.baseURL}/create`,
         classData,
         this.getAuthHeaders(token)
       );
@@ -76,7 +76,7 @@ class LiveClassAPI {
   // Start a live class (Teacher)
   async startClass(classId, token) {
     try {
-      const response = await axios.patch(
+      const response = await axios.post(
         `${this.baseURL}/${classId}/start`,
         {},
         this.getAuthHeaders(token)
@@ -90,7 +90,7 @@ class LiveClassAPI {
   // End a live class (Teacher)
   async endClass(classId, token) {
     try {
-      const response = await axios.patch(
+      const response = await axios.post(
         `${this.baseURL}/${classId}/end`,
         {},
         this.getAuthHeaders(token)

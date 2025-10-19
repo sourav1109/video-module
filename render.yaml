@@ -1,0 +1,53 @@
+# Render Blueprint for Video Call Application
+# This file deploys both backend and frontend to Render
+
+services:
+  # Backend Service (Node.js API + Socket.IO)
+  - type: web
+    name: video-call-backend
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_Md8Lk6fromCY@ep-old-shadow-adhkxq37-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+      - key: JWT_SECRET
+        generateValue: true
+      - key: USE_REDIS
+        value: false
+      - key: CORS_ORIGIN
+        fromService:
+          type: web
+          name: video-call-frontend
+          property: host
+    healthCheckPath: /health
+
+  # Frontend Service (React)
+  - type: web
+    name: video-call-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: video-call-backend
+          property: host
+      - key: REACT_APP_SOCKET_URL
+        fromService:
+          type: web
+          name: video-call-backend
+          property: host

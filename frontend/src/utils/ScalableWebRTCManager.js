@@ -1331,6 +1331,27 @@ class ScalableWebRTCManager {
     try {
       console.log('🎥 Starting local media for role:', this.userRole);
       
+      // Debug: Check what's available
+      console.log('🔍 Browser capabilities:', {
+        hasNavigator: typeof navigator !== 'undefined',
+        hasMediaDevices: typeof navigator !== 'undefined' && typeof navigator.mediaDevices !== 'undefined',
+        hasGetUserMedia: typeof navigator !== 'undefined' && 
+                         typeof navigator.mediaDevices !== 'undefined' && 
+                         typeof navigator.mediaDevices.getUserMedia !== 'undefined',
+        protocol: window.location.protocol,
+        hostname: window.location.hostname,
+        isLocalhost: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      });
+      
+      // Check if navigator.mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error(
+          'WebRTC is not supported in this browser or context. ' +
+          'Please use Chrome, Firefox, or Edge on HTTPS (or localhost). ' +
+          'Current protocol: ' + window.location.protocol + ', hostname: ' + window.location.hostname
+        );
+      }
+      
       // Get user media
       this.localStream = await navigator.mediaDevices.getUserMedia({
         video: true,

@@ -1,0 +1,462 @@
+{
+  "generatedBy": "GitHub Copilot - Complete Codebase Index",
+  "generatedAt": "2025-01-19T00:00:00Z",
+  "projectName": "Video Call Module (SGT-LMS Live Class System)",
+  "architecture": "Full-stack video conferencing with Mediasoup SFU",
+  "stack": {
+    "frontend": "React + Material-UI + Socket.IO Client + Mediasoup Client",
+    "backend": "Node.js + Express + Socket.IO + Mediasoup SFU",
+    "database": "MongoDB + Mongoose",
+    "realtime": "Socket.IO with Redis adapter (scalable)",
+    "infrastructure": "Docker + Docker Compose"
+  },
+  "summary": "Complete enterprise-grade video call module with scalable WebRTC SFU architecture supporting 300+ concurrent students, multi-role access (Teacher/Student/HOD/Dean/Admin), advanced whiteboard collaboration, real-time chat, polls, file sharing, screen sharing, and recording capabilities.",
+  "keyFeatures": [
+    "Mediasoup SFU for scalable WebRTC (10k+ users)",
+    "Multi-section merged classes",
+    "Role-based permissions (Teacher/Student/HOD/Dean/Admin)",
+    "Advanced Fabric.js whiteboard with collaboration",
+    "Real-time chat with reactions and file sharing",
+    "Live polls and Q&A",
+    "Screen sharing and recording",
+    "Waiting room with approval workflow",
+    "Analytics and attendance tracking",
+    "Docker containerization"
+  ],
+  "criticalIssues": [
+    {
+      "severity": "HIGH",
+      "type": "Missing Implementation",
+      "location": "frontend/src/components/",
+      "description": "Multiple empty placeholder components: TeacherVideoPanel.js, StudentGridView.js, PollPanel.js, ControlBar.js, ChatPanel.js, AttendancePanel.js - These are referenced but not implemented",
+      "impact": "UI features may not work or crash when accessed"
+    },
+    {
+      "severity": "MEDIUM",
+      "type": "Server Bug",
+      "location": "backend/src/server.js:6",
+      "description": "Wrong import: using 'https' instead of 'http' for HTTP server creation, then trying to fallback. This causes SSL certificate errors when certificates are not found.",
+      "fix": "Change line 6 from `const http = require('https');` to `const http = require('http');` OR handle HTTPS properly with proper cert checks"
+    },
+    {
+      "severity": "MEDIUM",
+      "type": "Configuration Issue",
+      "location": "backend/.env (missing)",
+      "description": "Missing .env file with required environment variables (JWT_SECRET, MONGODB_URI, REDIS_URL, etc.)",
+      "impact": "Application will fail to start or use insecure defaults"
+    },
+    {
+      "severity": "LOW",
+      "type": "Port Configuration",
+      "location": "docker-compose.yml",
+      "description": "Mediasoup RTC port range (10000-10100) may be insufficient for 300+ concurrent users",
+      "fix": "Expand to 10000-11000 as configured in MediasoupService.js"
+    },
+    {
+      "severity": "LOW",
+      "type": "Missing Dependencies",
+      "location": "backend/src/middleware/auth.js",
+      "description": "Auth middleware file referenced but implementation not visible in index",
+      "impact": "Authentication may fail"
+    }
+  ],
+  "files": [
+    {
+      "path": "backend/src/server.js",
+      "language": "javascript",
+      "kind": "Node.js Express Server (Entry Point)",
+      "exports": ["VideoCallServer (class)"],
+      "symbols": ["setupMiddleware","setupRoutes","createHTTPSServer","initializeServices","start","shutdown"],
+      "truncated": false,
+      "notes": "Main server entry with SSL/HTTPS support, Mediasoup + Socket.IO initialization, health checks, graceful shutdown. BUG: Line 6 imports 'https' when should be 'http' or handle HTTPS properly.",
+      "dependencies": ["express","socket.io","mediasoup","cors","helmet","compression","morgan","rate-limit"]
+    },
+    {
+      "path": "backend/src/socket/videoCallSocket.js",
+      "language": "javascript",
+      "kind": "Socket.IO Event Handler",
+      "exports": ["initializeLiveClassSocket (function)"],
+      "symbols": ["join-room","leave-room","offer","answer","ice-candidate","chat-message","raise-hand","whiteboard-update","screen-share-started","recording-started","grant-student-permission","class-settings-updated"],
+      "truncated": false,
+      "notes": "Complete socket event handling with JWT auth middleware, multi-section support, permission management, whiteboard events, waiting room logic, enhanced for 300+ students",
+      "complexity": "HIGH - 800+ lines with intricate permission checks and role-based access"
+    },
+    {
+      "path": "backend/src/services/MediasoupService.js",
+      "language": "javascript",
+      "kind": "Mediasoup SFU Service (Core WebRTC)",
+      "exports": ["MediasoupService (class)"],
+      "symbols": ["initialize","createWorker","createClassRouter","createWebRtcTransport","connectWebRtcTransport","createProducer","createConsumer","resumeConsumer","closeProducer","cleanupUserMedia","diagnoseMediaState"],
+      "truncated": false,
+      "notes": "Production-ready Mediasoup SFU with worker pool, router per class, transport management, producer/consumer lifecycle, SSRC conflict resolution, graceful cleanup, Redis clustering support. Supports 10k+ concurrent users.",
+      "complexity": "VERY HIGH - 1000+ lines, critical for video/audio streaming"
+    },
+    {
+      "path": "backend/src/services/SocketService.js",
+      "language": "javascript",
+      "kind": "Scalable Socket.IO Service",
+      "exports": ["ScalableSocketService (class)"],
+      "symbols": ["initialize","setupRedisAdapter","setupAuthentication","setupLiveClassEvents","setupMediasoupEvents","handleDisconnection","broadcastToClass"],
+      "truncated": false,
+      "notes": "Wrapper for Socket.IO with Redis adapter for horizontal scaling, JWT authentication, rate limiting, multi-role permission handling, integrates with MediasoupService"
+    },
+    {
+      "path": "backend/src/services/videoCallService.js",
+      "language": "javascript",
+      "kind": "Business Logic Service",
+      "exports": [],
+      "truncated": false,
+      "notes": "Placeholder or minimal business logic - main logic is in controllers"
+    },
+    {
+      "path": "backend/src/routes/videoCall.js",
+      "language": "javascript",
+      "kind": "Express Router (API Routes)",
+      "exports": ["router (Express Router)"],
+      "symbols": [],
+      "truncated": false,
+      "notes": "Complete REST API routes with multer file upload, auth middleware, role-based authorization for Teacher/Student/HOD/Dean/Admin routes: schedule class, start/end class, join/leave, upload recording, manage polls/files, waiting room approval"
+    },
+    {
+      "path": "backend/src/routes/videoCallController.js",
+      "language": "javascript",
+      "kind": "Express Controllers",
+      "exports": ["scheduleClass","scheduleMergedClass","getTeacherClasses","getStudentClasses","startClass","endClass","joinClass","leaveClass","updateClassSettings","uploadRecording","joinClassByToken","joinByToken","publicJoinByToken","saveWhiteboardNote","getWhiteboardNotes","getClassAnalytics"],
+      "symbols": ["canTeacherAccessSectionCourse"],
+      "truncated": true,
+      "notes": "Complete controller implementations for all live class operations with multi-section support, access token generation, waiting room logic, enhanced for 300+ concurrent students, role permissions, analytics. File is 2222 lines."
+    },
+    {
+      "path": "backend/src/models/VideoCallRoom.js",
+      "language": "javascript",
+      "kind": "Mongoose Model Schema",
+      "exports": ["LiveClass (Mongoose Model)"],
+      "symbols": ["addParticipant","removeParticipant","getPermissionsForRole","getUpcomingClassesForTeacher","getClassesForSections","getClassByAccessToken","canUserAccessClass"],
+      "truncated": false,
+      "notes": "Comprehensive LiveClass schema with multi-section support, participant tracking with roles, permissions, whiteboard notes, chat messages, polls, breakout rooms, analytics, access tokens, waiting room, password protection. Supports 350 max participants."
+    },
+    {
+      "path": "backend/package.json",
+      "language": "json",
+      "kind": "Node.js Package Config",
+      "exports": [],
+      "dependencies": ["express","socket.io","mediasoup","mongoose","redis","jsonwebtoken","bcryptjs","cors","helmet","multer","winston"],
+      "truncated": false,
+      "notes": "Backend dependencies with Mediasoup 3.13.24, Socket.IO 4.7.4, MongoDB, Redis adapter"
+    },
+    {
+      "path": "frontend/src/components/VideoCallRoom.js",
+      "language": "javascript",
+      "kind": "React Component (Main Video Room)",
+      "exports": ["default (SgtLmsLiveClass)"],
+      "symbols": ["attachVideoStream","detachVideoStream","initWebRTC","toggleMicrophone","toggleCamera","toggleScreenShare","grantStudentPermission","revokeStudentPermission","pinVideo","unpinVideo","handleFileUpload","createQuickPoll","toggleHandRaise"],
+      "truncated": true,
+      "notes": "Main live class component (3991 lines) with complete WebRTC integration, socket event handling, permission management, media controls, file sharing, polls, attendance, whiteboard. CRITICAL component."
+    },
+    {
+      "path": "frontend/src/components/TeacherDashboard.js",
+      "language": "javascript",
+      "kind": "React Component",
+      "exports": ["default (TeacherLiveClassDashboard)"],
+      "symbols": ["loadClasses","handleStartClass","handleJoinClass","handleEndClass","handleDeleteClass","handlePlayRecording","handleDownloadRecording"],
+      "truncated": false,
+      "notes": "Teacher dashboard for class management - schedule, start, join, end, view recordings"
+    },
+    {
+      "path": "frontend/src/components/StudentDashboard.js",
+      "language": "javascript",
+      "kind": "React Component",
+      "exports": ["default (StudentLiveClassDashboard)"],
+      "symbols": ["loadClasses","handleJoinClass","handleActualJoin","handleCancelJoin"],
+      "truncated": false,
+      "notes": "Student dashboard for viewing and joining scheduled classes"
+    },
+    {
+      "path": "frontend/src/components/ScheduleRoomDialog.js",
+      "language": "javascript",
+      "kind": "React Component (Dialog)",
+      "exports": ["default (ScheduleLiveClassDialog)"],
+      "symbols": ["loadSectionsAndCourses","handleInputChange","handleSubmit","handleClose"],
+      "truncated": false,
+      "notes": "Dialog for teachers to schedule new live classes with date/time picker"
+    },
+    {
+      "path": "frontend/src/components/JoinRoom.js",
+      "language": "javascript",
+      "kind": "React Component",
+      "exports": ["default (JoinRoom)"],
+      "symbols": ["initializeMediaPreview","toggleVideo","toggleAudio","handleJoinRoom"],
+      "truncated": false,
+      "notes": "Media preview component before joining a room - test camera/microphone"
+    },
+    {
+      "path": "frontend/src/components/CreateRoom.js",
+      "language": "javascript",
+      "kind": "React Component",
+      "exports": ["default (CreateRoom)"],
+      "symbols": ["generateRoomId","handleCreateRoom","handleFeatureToggle"],
+      "truncated": false,
+      "notes": "Quick room creation component with feature toggles"
+    },
+    {
+      "path": "frontend/src/components/WhiteboardPanel.js",
+      "language": "javascript",
+      "kind": "React Component (Whiteboard UI)",
+      "exports": ["default (WhiteboardPanel)"],
+      "symbols": ["handleExport","handleUndo","handleRedo","setTool","handleBrushChange","handleZoom"],
+      "truncated": false,
+      "notes": "Whiteboard UI wrapper with toolbar - integrates AdvancedWhiteboard, handles teacher-only controls, export, undo/redo"
+    },
+    {
+      "path": "frontend/src/components/whiteboard/AdvancedWhiteboard.js",
+      "language": "javascript",
+      "kind": "React Component (Fabric.js Whiteboard)",
+      "exports": ["default (AdvancedWhiteboard)"],
+      "symbols": ["initFabricCanvas","setBrush","addShape","addText","exportAsImage","exportAsPDF","undo","redo","handleObjectModified","handlePathCreated","emitDrawingEvents"],
+      "truncated": true,
+      "notes": "Feature-rich Fabric.js whiteboard (4725 lines) with dynamic import, advanced drawing tools, shapes, text, images, PDF export, real-time collaboration via socket events, undo/redo stack, grid, fullscreen. CRITICAL component."
+    },
+    {
+      "path": "frontend/src/components/whiteboard/EnhancedWhiteboard.js",
+      "language": "javascript",
+      "kind": "React Component",
+      "exports": ["default (EnhancedWhiteboard)"],
+      "symbols": ["addText","undo","redo","saveAllPages","loadPage","exportPages"],
+      "truncated": false,
+      "notes": "Dialog-based multi-page whiteboard with annotation overlay, save/load, PDF support"
+    },
+    {
+      "path": "frontend/src/components/whiteboard/SimpleAdvancedWhiteboard.js",
+      "language": "javascript",
+      "kind": "React Component",
+      "exports": ["default (SimpleAdvancedWhiteboard)"],
+      "symbols": ["startDrawing","draw","stopDrawing","emitDrawEvents","handleLock","handleClear"],
+      "truncated": false,
+      "notes": "Canvas 2D-based whiteboard with basic drawing, websocket sync, lock/unlock"
+    },
+    {
+      "path": "frontend/src/components/whiteboard/MinimalWhiteboard.js",
+      "language": "javascript",
+      "kind": "React Component",
+      "exports": ["default (MinimalWhiteboard)"],
+      "symbols": ["draw","clear","sync"],
+      "truncated": false,
+      "notes": "Minimal canvas whiteboard implementation"
+    },
+    {
+      "path": "frontend/src/components/TeacherVideoPanel.js",
+      "language": "javascript",
+      "kind": "EMPTY PLACEHOLDER",
+      "exports": [],
+      "empty": true,
+      "notes": "⚠️ CRITICAL ISSUE: Empty file - referenced but not implemented"
+    },
+    {
+      "path": "frontend/src/components/StudentGridView.js",
+      "language": "javascript",
+      "kind": "EMPTY PLACEHOLDER",
+      "exports": [],
+      "empty": true,
+      "notes": "⚠️ CRITICAL ISSUE: Empty file - referenced but not implemented"
+    },
+    {
+      "path": "frontend/src/components/PollPanel.js",
+      "language": "javascript",
+      "kind": "EMPTY PLACEHOLDER",
+      "exports": [],
+      "empty": true,
+      "notes": "⚠️ CRITICAL ISSUE: Empty file - poll functionality may not work"
+    },
+    {
+      "path": "frontend/src/components/ControlBar.js",
+      "language": "javascript",
+      "kind": "EMPTY PLACEHOLDER",
+      "exports": [],
+      "empty": true,
+      "notes": "⚠️ CRITICAL ISSUE: Empty file - media controls may not work"
+    },
+    {
+      "path": "frontend/src/components/ChatPanel.js",
+      "language": "javascript",
+      "kind": "EMPTY PLACEHOLDER",
+      "exports": [],
+      "empty": true,
+      "notes": "⚠️ CRITICAL ISSUE: Empty file - chat UI may not work"
+    },
+    {
+      "path": "frontend/src/components/AttendancePanel.js",
+      "language": "javascript",
+      "kind": "EMPTY PLACEHOLDER",
+      "exports": [],
+      "empty": true,
+      "notes": "⚠️ CRITICAL ISSUE: Empty file - attendance tracking UI missing"
+    },
+    {
+      "path": "frontend/src/utils/enhancedWebrtc.js",
+      "language": "javascript",
+      "kind": "WebRTC Manager Class",
+      "exports": ["EnhancedWebRTCManager (class)"],
+      "symbols": ["initialize","setupSocketHandlers","getUserMedia","createPeerConnection","createOffer","handleOffer","handleAnswer","handleIceCandidate","toggleVideo","toggleAudio","startScreenShare","stopScreenShare","switchCamera","switchMicrophone","cleanup"],
+      "truncated": false,
+      "notes": "Complete WebRTC peer connection management with mesh architecture, media device switching, screen sharing, ICE handling, connection state monitoring"
+    },
+    {
+      "path": "frontend/src/contexts/VideoCallContext.js",
+      "language": "javascript",
+      "kind": "React Context + Reducer",
+      "exports": ["VideoCallProvider","useVideoCall","ActionTypes"],
+      "symbols": ["videoCallReducer","setConnecting","setConnected","addParticipant","removeParticipant","toggleVideo","toggleAudio","setScreenSharing","toggleChat","setLayout"],
+      "truncated": false,
+      "notes": "Global state management for video call with React Context + useReducer pattern, handles connection state, participants, media state, UI state, features"
+    },
+    {
+      "path": "frontend/src/services/enhancedVideoCallApi.js",
+      "language": "javascript",
+      "kind": "API Service",
+      "exports": [],
+      "truncated": false,
+      "notes": "Enhanced API wrapper (not fully read)"
+    },
+    {
+      "path": "frontend/src/services/videoCallApi.js",
+      "language": "javascript",
+      "kind": "API Service",
+      "exports": [],
+      "truncated": false,
+      "notes": "API wrapper for backend REST endpoints (not fully read)"
+    },
+    {
+      "path": "frontend/src/utils/ScalableWebRTCManager.js",
+      "language": "javascript",
+      "kind": "WebRTC Manager (Scalable)",
+      "exports": [],
+      "truncated": false,
+      "notes": "Alternative WebRTC manager (not fully read)"
+    },
+    {
+      "path": "frontend/src/utils/WebRTCManager.js",
+      "language": "javascript",
+      "kind": "WebRTC Manager (Basic)",
+      "exports": [],
+      "truncated": false,
+      "notes": "Basic WebRTC manager (not fully read)"
+    },
+    {
+      "path": "frontend/src/utils/WhiteboardUtils.js",
+      "language": "javascript",
+      "kind": "Utility Module",
+      "exports": [],
+      "truncated": false,
+      "notes": "Whiteboard utility functions (not fully read)"
+    },
+    {
+      "path": "frontend/src/App.js",
+      "language": "javascript",
+      "kind": "React App Root",
+      "exports": [],
+      "truncated": false,
+      "notes": "Main app component with routing (not fully read)"
+    },
+    {
+      "path": "frontend/src/index.js",
+      "language": "javascript",
+      "kind": "React Entry Point",
+      "exports": [],
+      "truncated": false,
+      "notes": "React DOM render entry (not fully read)"
+    },
+    {
+      "path": "frontend/package.json",
+      "language": "json",
+      "kind": "React Package Config",
+      "exports": [],
+      "dependencies": ["react","react-dom","@mui/material","mediasoup-client","socket.io-client","axios","react-toastify","uuid","react-router-dom","fabric","pdfjs-dist","jspdf","html2canvas"],
+      "truncated": false,
+      "notes": "Frontend dependencies - React 18, MUI 5, Mediasoup client, Fabric.js for whiteboard"
+    },
+    {
+      "path": "docker-compose.yml",
+      "language": "yaml",
+      "kind": "Docker Compose Configuration",
+      "exports": [],
+      "truncated": false,
+      "notes": "Full stack containerization: frontend (port 3000), backend (port 5000 + RTC 10000-10100), Redis, MongoDB. ⚠️ RTC port range may be insufficient for 300+ users."
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "kind": "Documentation",
+      "truncated": false,
+      "notes": "Comprehensive project documentation with architecture, API reference, socket events, quick start, deployment guide"
+    },
+    {
+      "path": "WHITEBOARD_DOCUMENTATION.md",
+      "language": "markdown",
+      "kind": "Documentation",
+      "truncated": false,
+      "notes": "Extensive whiteboard feature documentation - libraries, architecture, usage examples, API reference"
+    },
+    {
+      "path": "MIGRATION_STATUS.md",
+      "language": "markdown",
+      "kind": "Documentation",
+      "truncated": false,
+      "notes": "Migration status and component readiness notes"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "kind": "Root Package Config",
+      "exports": [],
+      "scripts": ["install:frontend","install:backend","start:dev","build:frontend","build:backend"],
+      "truncated": false,
+      "notes": "Root package.json with workspace scripts for concurrent frontend/backend development"
+    }
+  ],
+  "actionItems": [
+    {
+      "priority": "CRITICAL",
+      "task": "Implement empty component files",
+      "files": [
+        "frontend/src/components/TeacherVideoPanel.js",
+        "frontend/src/components/StudentGridView.js",
+        "frontend/src/components/PollPanel.js",
+        "frontend/src/components/ControlBar.js",
+        "frontend/src/components/ChatPanel.js",
+        "frontend/src/components/AttendancePanel.js"
+      ],
+      "description": "These files are referenced but empty. Implement them or remove references to prevent crashes."
+    },
+    {
+      "priority": "HIGH",
+      "task": "Fix HTTPS import bug",
+      "files": ["backend/src/server.js"],
+      "line": 6,
+      "description": "Change `const http = require('https');` to `const http = require('http');` OR properly handle HTTPS with valid certificates"
+    },
+    {
+      "priority": "HIGH",
+      "task": "Create .env configuration file",
+      "files": ["backend/.env"],
+      "description": "Create .env file with: JWT_SECRET, MONGODB_URI, REDIS_URL, FRONTEND_URL, MEDIASOUP_ANNOUNCED_IP, SSL_KEY_PATH, SSL_CERT_PATH"
+    },
+    {
+      "priority": "MEDIUM",
+      "task": "Expand Mediasoup RTC port range",
+      "files": ["docker-compose.yml"],
+      "description": "Change RTC port range from 10000-10100 to 10000-11000 to support 300+ concurrent users"
+    },
+    {
+      "priority": "MEDIUM",
+      "task": "Verify auth middleware exists",
+      "files": ["backend/src/middleware/auth.js"],
+      "description": "Ensure authentication middleware is properly implemented (referenced in routes)"
+    },
+    {
+      "priority": "LOW",
+      "task": "Complete API service implementations",
+      "files": ["frontend/src/services/videoCallApi.js", "frontend/src/services/enhancedVideoCallApi.js"],
+      "description": "Review and complete API wrapper implementations if needed"
+    }
+  ]
+}

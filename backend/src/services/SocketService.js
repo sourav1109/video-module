@@ -12,12 +12,7 @@ class ScalableSocketService {
     // Use existing Socket.IO instance or create new one
     this.io = existingIo || new Server(server, {
       cors: {
-        origin: [
-          "http://localhost:3000",
-          "https://localhost:3000",
-          "http://192.168.7.20:3000",
-          "https://192.168.7.20:3000"
-        ],
+        origin: true, // Allow all origins in development
         methods: ["GET", "POST"],
         credentials: true
       },
@@ -53,7 +48,7 @@ class ScalableSocketService {
       this.setupEventHandlers();
 
       // Setup scalable live class socket handlers
-      const setupScalableLiveClassSocket = require('./scalableLiveClassSocket');
+      const setupScalableLiveClassSocket = require('./videoCallService');
       setupScalableLiveClassSocket(this.io, this.mediasoupService);
 
       // Setup rate limiting
@@ -129,15 +124,15 @@ class ScalableSocketService {
         // Verify JWT token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
-        // Get user data (you can integrate with your existing User model)
-        const User = require('../models/User');
-        const user = await User.findById(decoded.id).select('-password');
+        // Get user data from PostgreSQL
+        const UserRepository = require('../repositories/UserRepository');
+        const user = await UserRepository.findById(decoded.id);
         
         if (!user) {
           return next(new Error('User not found'));
         }
 
-        socket.userId = user._id.toString();
+        socket.userId = user.id.toString();
         socket.userData = user;
         
         console.log(`🔐 User ${user.name} authenticated via Socket.IO`);
@@ -215,9 +210,9 @@ class ScalableSocketService {
         
         console.log(`👤 User ${socket.userData.name} joining class ${classId} as ${userRole}`);
 
-        // Validate class access (integrate with your existing logic)
-        const LiveClass = require('../models/LiveClass');
-        const liveClass = await LiveClass.findById(classId);
+        // Validate class access using PostgreSQL
+        const LiveClassRepository = require('../repositories/LiveClassRepository');
+        const liveClass = await LiveClassRepository.findById(classId);
         
         if (!liveClass || liveClass.status !== 'live') {
           return callback({ error: 'Class not found or not live' });

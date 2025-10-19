@@ -1,31 +1,161 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Container, Typography, Button } from '@mui/material';
 import VideoCallRoom from './components/VideoCallRoom';
 import JoinRoom from './components/JoinRoom';
 import CreateRoom from './components/CreateRoom';
+import Login from './components/Login';
+import TeacherDashboard from './components/TeacherDashboard';
+import StudentDashboard from './components/StudentDashboard';
 import { useVideoCall } from './contexts/VideoCallContext';
+import { initAuthCleanup, getValidToken } from './utils/authUtils';
+
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const token = getValidToken();
+  const userStr = localStorage.getItem('user');
+  
+  if (!token || !userStr) {
+    return <Navigate to="/login" replace />;
+  }
+
+  try {
+    const user = JSON.parse(userStr);
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+      return <Navigate to="/login" replace />;
+    }
+    return children;
+  } catch (error) {
+    console.error('Error parsing user data:', error);
+    return <Navigate to="/login" replace />;
+  }
+};
 
 function App() {
-  const { isConnected } = useVideoCall();
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    // Clean up any invalid tokens on app start
+    console.log('🚀 Initializing app...');
+    initAuthCleanup();
+    
+    // Check if user is already logged in
+    const savedToken = getValidToken();
+    const savedUser = localStorage.getItem('user');
+    
+    if (savedToken && savedUser) {
+      try {
+        setToken(savedToken);
+        setUser(JSON.parse(savedUser));
+        console.log('✅ User session restored');
+      } catch (error) {
+        console.error('❌ Error loading user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    } else {
+      console.log('ℹ️ No valid session found');
+    }
+  }, []);
+
+  const handleLoginSuccess = (userData, authToken) => {
+    setUser(userData);
+    setToken(authToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setToken(null);
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <Routes>
+        {/* Login Route */}
+        <Route 
+          path="/login" 
+          element={
+            user ? (
+              <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />
+            ) : (
+              <Login onLoginSuccess={handleLoginSuccess} />
+            )
+          } 
+        />
+
+        {/* Teacher Routes */}
+        <Route
+          path="/teacher/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['teacher', 'admin', 'hod', 'dean']}>
+              <TeacherDashboard token={token} user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Teacher Live Class Room */}
+        <Route
+          path="/teacher/live-class/:classId"
+          element={
+            <ProtectedRoute allowedRoles={['teacher', 'admin', 'hod', 'dean']}>
+              <VideoCallRoom token={token} user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Student Routes */}
+        <Route
+          path="/student/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <StudentDashboard token={token} user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        
         {/* Home/Landing Page */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<HomePage />} />
         
         {/* Create Room */}
-        <Route path="/create" element={<CreateRoom />} />
+        <Route 
+          path="/create" 
+          element={
+            <ProtectedRoute allowedRoles={['teacher', 'admin', 'hod', 'dean']}>
+              <CreateRoom token={token} user={user} />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Join Room */}
         <Route path="/join" element={<JoinRoom />} />
         <Route path="/join/:roomId" element={<JoinRoom />} />
         
         {/* Video Call Room */}
-        <Route path="/room/:roomId" element={<VideoCallRoom />} />
+        <Route 
+          path="/room/:roomId" 
+          element={
+            <ProtectedRoute allowedRoles={['teacher', 'student', 'admin', 'hod', 'dean']}>
+              <VideoCallRoom token={token} user={user} />
+            </ProtectedRoute>
+          } 
+        />
         
-        {/* Redirect unknown routes to home */}
+        {/* Default Route - redirect to login or dashboard */}
+        <Route 
+          path="/" 
+          element={
+            user ? (
+              <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        
+        {/* Redirect unknown routes */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Box>

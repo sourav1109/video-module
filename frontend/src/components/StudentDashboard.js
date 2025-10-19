@@ -37,7 +37,7 @@ import {
 import { styled } from '@mui/material/styles';
 import SgtLmsLiveClass from '../liveclass/CodeTantraLiveClass';
 import LiveClassJoinPage from './LiveClassJoinPage';
-import liveClassAPI from '../../api/liveClassApi';
+import liveClassAPI from '../api/liveClassApi';
 
 // Styled Components
 const DashboardContainer = styled(Box)(({ theme }) => ({

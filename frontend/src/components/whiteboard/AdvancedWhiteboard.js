@@ -1,4 +1,6 @@
 ﻿import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import {
   Box,
   AppBar,
@@ -46,10 +48,6 @@ import { styled, alpha } from '@mui/material/styles';
 // Enhanced fabric loading with better error handling and debugging
 let fabric;
 let Canvas, PencilBrush, IText, Rect, FabricCircle, Line, Path, FabricImage, util;
-
-// Removed legacy simple-canvas fallback (it caused conflicts & disappearing objects). Advanced Fabric version below.
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 
 // ==================== STYLED COMPONENTS ====================
 
@@ -2372,7 +2370,7 @@ const AdvancedWhiteboard = ({
               const canvasEl = fabricCanvas.current.getElement();
               if (canvasEl) {
                 canvasEl.style.display = 'none';
-                canvasEl.offsetHeight; // Trigger reflow
+                void canvasEl.offsetHeight; // Trigger reflow (void suppresses lint error)
                 canvasEl.style.display = 'block';
                 console.log('🔄 Canvas element refreshed');
               }

@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useUserRole } from '../../contexts/UserRoleContext';
+import { useUserRole } from '../contexts/UserRoleContext';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { toast } from 'react-toastify';
@@ -84,8 +84,8 @@ import {
 } from '@mui/icons-material';
 
 import { styled } from '@mui/material/styles';
-import ScalableWebRTCManager from '../../utils/ScalableWebRTCManager';
-import AdvancedWhiteboard from '../whiteboard/AdvancedWhiteboard';
+import ScalableWebRTCManager from '../utils/ScalableWebRTCManager';
+import AdvancedWhiteboard from './whiteboard/AdvancedWhiteboard';
 
 // Styled Components following SGT LMS design
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -581,13 +581,13 @@ const SgtLmsLiveClass = ({ token, user, classId: propClassId }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const API_URL = process.env.REACT_APP_API_URL || 'https://192.168.7.20:5000';
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // 1. Fetch class data from backend
-        const classResponse = await axios.get(`${API_URL}/api/live-classes/${classId}`, {
+        const classResponse = await axios.get(`${API_URL}/api/video-call/${classId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const classData = classResponse.data;
+        const classData = classResponse.data.class || classResponse.data;
         setClassData(classData);
 
         // Set class permissions based on class settings
@@ -614,20 +614,22 @@ const SgtLmsLiveClass = ({ token, user, classId: propClassId }) => {
           cameraEnabled: isCurrentUserInstructor || classData.allowStudentCamera
         });
 
-        // 2. Fetch participants
-        const participantsResponse = await axios.get(`${API_URL}/api/live-classes/${classId}/participants`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setParticipants(participantsResponse.data.participants || []);
+        // 2. Fetch participants - Commented out, will use Socket.IO real-time updates
+        // const participantsResponse = await axios.get(`${API_URL}/api/video-call/${classId}/participants`, {
+        //   headers: { Authorization: `Bearer ${token}` }
+        // });
+        // setParticipants(participantsResponse.data.participants || []);
+        setParticipants([]);
 
-        // 3. Fetch chat history
-        const messagesResponse = await axios.get(`${API_URL}/api/live-classes/${classId}/messages`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setChatMessages(messagesResponse.data.messages || []);
+        // 3. Fetch chat history - Commented out, will use Socket.IO real-time updates
+        // const messagesResponse = await axios.get(`${API_URL}/api/video-call/${classId}/messages`, {
+        //   headers: { Authorization: `Bearer ${token}` }
+        // });
+        // setChatMessages(messagesResponse.data.messages || []);
+        setChatMessages([]);
 
         // 4. Initialize Socket.IO for real-time features
-        socket.current = io(process.env.REACT_APP_SOCKET_URL || 'https://192.168.7.20:5000', {
+        socket.current = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000', {
           auth: { 
             token,
             classId,
@@ -1091,7 +1093,7 @@ const SgtLmsLiveClass = ({ token, user, classId: propClassId }) => {
         };
         
         console.log('Connection parameters:', {
-          serverUrl: process.env.REACT_APP_SOCKET_URL || 'https://192.168.7.20:5000',
+          serverUrl: process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000',
           classId,
           userId: currentUser?.id || currentUser?._id,
           userName: currentUser?.name || currentUser?.username,
@@ -1101,7 +1103,7 @@ const SgtLmsLiveClass = ({ token, user, classId: propClassId }) => {
         // CRITICAL FIX: Call connect() method to establish full WebRTC connection
         // This handles: Socket.IO connection, joinClass, device loading, transport creation
         await webrtcManager.current.connect({
-          serverUrl: process.env.REACT_APP_SOCKET_URL || 'https://192.168.7.20:5000',
+          serverUrl: process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000',
           classId: classId,
           userId: currentUser?.id || currentUser?._id,
           userName: currentUser?.name || currentUser?.username,
@@ -2986,7 +2988,7 @@ const SgtLmsLiveClass = ({ token, user, classId: propClassId }) => {
         {(isInstructor || canModerate) && (
           <Box sx={{ mt: 1 }}>
             <Typography variant='caption' color='info.main' sx={{ mb: 1, display: 'block' }}>
-              '¡ Click camera/mic icons next to student names to grant permissions
+              💡 Click camera/mic icons next to student names to grant permissions
             </Typography>
           </Box>
         )}
