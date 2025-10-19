@@ -1,16 +1,16 @@
 # Render Blueprint for Video Call Application
-# This file deploys both backend and frontend to Render
+# Multi-service deployment with separate backend and frontend
 
 services:
-  # Backend Service (Node.js API + Socket.IO)
+  # Backend Service - Node.js API with Mediasoup and Socket.IO
   - type: web
     name: video-call-backend
-    runtime: node
+    repo: https://github.com/sourav1109/video-module.git
+    branch: main
     region: oregon
     plan: free
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm start
+    dockerfile: ./backend/Dockerfile
+    dockerContext: ./backend
     envVars:
       - key: NODE_ENV
         value: production
@@ -27,15 +27,16 @@ services:
           type: web
           name: video-call-frontend
           property: host
-    healthCheckPath: /health
 
-  # Frontend Service (React) - served as static site
+  # Frontend Service - React application
   - type: web
     name: video-call-frontend
-    runtime: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: build
+    repo: https://github.com/sourav1109/video-module.git
+    branch: main
+    region: oregon
+    plan: free
+    dockerfile: ./frontend/Dockerfile
+    dockerContext: ./frontend
     routes:
       - type: rewrite
         source: /*
