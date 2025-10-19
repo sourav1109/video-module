@@ -1,8 +1,8 @@
 # Render Blueprint - Video Call Application
-# Deploys backend and frontend as separate services
+# This blueprint deploys backend and frontend services
 
 services:
-  # Backend Service
+  # Backend API Service
   - type: web
     name: video-call-backend
     runtime: node
@@ -22,7 +22,7 @@ services:
       - key: USE_REDIS
         value: false
 
-  # Frontend Service
+  # Frontend React Service  
   - type: web
     name: video-call-frontend
     runtime: node
@@ -32,12 +32,6 @@ services:
     startCommand: cd frontend && npm install -g serve && serve -s build -l 3000
     envVars:
       - key: REACT_APP_API_URL
-        fromService:
-          type: web
-          name: video-call-backend
-          property: host
+        value: https://video-call-backend.onrender.com
       - key: REACT_APP_SOCKET_URL
-        fromService:
-          type: web
-          name: video-call-backend
-          property: host
+        value: https://video-call-backend.onrender.com
