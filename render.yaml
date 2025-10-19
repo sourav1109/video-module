@@ -28,9 +28,10 @@ services:
           property: host
     healthCheckPath: /health
 
-  # Frontend Service (React)
-  - type: static
+  # Frontend Service (React) - served as static site
+  - type: web
     name: video-call-frontend
+    env: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/build
     routes:
