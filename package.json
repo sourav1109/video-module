@@ -2,8 +2,9 @@
   "name": "video-call-module",
   "version": "1.0.0",
   "description": "Independent video call module with WebRTC and Mediasoup SFU",
-  "main": "index.js",
+  "main": "backend/src/server.js",
   "scripts": {
+    "start": "cd backend && node src/server.js",
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && npm install",
     "install:all": "npm run install:frontend && npm run install:backend",
