@@ -20,7 +20,6 @@ services:
   - type: web
     name: video-call-frontend
     runtime: static
-    region: oregon
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/build
     routes:
