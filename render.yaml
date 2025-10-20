@@ -16,6 +16,10 @@ services:
         value: 5000
       - key: DATABASE_URL
         sync: false
+      - key: JWT_SECRET
+        value: video-call-super-secret-jwt-key-change-in-production-12345
+      - key: USE_REDIS
+        value: false
 
   - type: web
     name: video-call-frontend

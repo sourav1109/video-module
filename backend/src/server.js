@@ -49,6 +49,9 @@ class VideoCallServer {
       allowedHeaders: ['Content-Type', 'Authorization']
     }));
 
+    // Trust proxy - required for Render and rate limiting
+    this.app.set('trust proxy', 1);
+
     // Rate limiting
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
