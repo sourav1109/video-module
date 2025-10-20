@@ -38,15 +38,17 @@ import {
   Cancel as CancelIcon,
   PlayCircleOutline as PlayRecordingIcon,
   Download as DownloadIcon,
-  Videocam as RecordingIcon
+  Videocam as RecordingIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ScheduleLiveClassDialog from './ScheduleLiveClassDialog';
 import liveClassAPI from '../api/liveClassApi';
+import authAPI from '../services/authApi';
 
-const TeacherLiveClassDashboard = ({ token, user }) => {
+const TeacherLiveClassDashboard = ({ token, user, onLogout }) => {
   console.log('🚨 TEACHER LIVE CLASS DASHBOARD COMPONENT LOADED!!! 🚨');
   console.log('🎓 Props received:', { token: !!token, user: user?.name, role: user?.role });
   
@@ -312,14 +314,35 @@ const TeacherLiveClassDashboard = ({ token, user }) => {
             Manage your live classes with 10,000+ student capacity using enhanced WebRTC technology
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setScheduleDialogOpen(true)}
-          size="large"
-        >
-          Schedule Class
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setScheduleDialogOpen(true)}
+            size="large"
+          >
+            Schedule Class
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<LogoutIcon />}
+            onClick={async () => {
+              try {
+                await authAPI.logout(authToken);
+                toast.success('Logged out successfully');
+                if (onLogout) onLogout();
+                navigate('/login');
+              } catch (error) {
+                console.error('Logout error:', error);
+                toast.error('Logout failed');
+              }
+            }}
+            size="large"
+          >
+            Logout
+          </Button>
+        </Box>
       </Box>
 
       {/* Statistics Cards */}

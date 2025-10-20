@@ -32,12 +32,16 @@ import {
   Person as PersonIcon,
   AccessTime as TimeIcon,
   Event as EventIcon,
-  Notifications as NotificationIcon
+  Notifications as NotificationIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import SgtLmsLiveClass from '../liveclass/CodeTantraLiveClass';
 import LiveClassJoinPage from './LiveClassJoinPage';
 import liveClassAPI from '../api/liveClassApi';
+import authAPI from '../services/authApi';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 // Styled Components
 const DashboardContainer = styled(Box)(({ theme }) => ({
@@ -318,13 +322,33 @@ const StudentLiveClassDashboard = ({ token, user }) => {
   return (
     <DashboardContainer>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-          My Live Classes
-        </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
-          Join live classes, view recordings, and track your attendance
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
+            My Live Classes
+          </Typography>
+          <Typography variant="subtitle1" color="textSecondary">
+            Join live classes, view recordings, and track your attendance
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<LogoutIcon />}
+          onClick={async () => {
+            try {
+              await authAPI.logout(authToken);
+              toast.success('Logged out successfully');
+              if (onLogout) onLogout();
+              navigate('/login');
+            } catch (error) {
+              console.error('Logout error:', error);
+              toast.error('Logout failed');
+            }
+          }}
+        >
+          Logout
+        </Button>
       </Box>
 
       {/* Statistics Cards */}

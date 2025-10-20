@@ -3,6 +3,9 @@
 -- Run this migration to add session tracking for logout functionality
 -- ============================================================================
 
+-- Enable UUID extension if not already enabled
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Sessions table for tracking active sessions and enabling logout
 CREATE TABLE IF NOT EXISTS user_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
