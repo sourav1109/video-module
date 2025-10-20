@@ -107,9 +107,10 @@ class VideoCallServer {
 
   createHTTPSServer() {
     try {
-      // In production (Render), skip SSL - Render handles HTTPS automatically
+      // In production (Render), use HTTP - Render handles HTTPS automatically
       if (process.env.NODE_ENV === 'production') {
-        console.log('Production mode: Skipping local SSL (Render provides HTTPS)');
+        console.log('Production mode: Creating HTTP server (Render provides HTTPS)');
+        this.server = http.createServer(this.app);
         return false;
       }
 
