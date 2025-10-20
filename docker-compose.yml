@@ -1,71 +1,116 @@
 version: '3.8'
 
-services:
-  # Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://localhost:5000
-      - REACT_APP_SOCKET_URL=http://localhost:5000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
-      - backend
+# =============================================================================
+# Video Call Module - Complete Docker Compose Setup
+# =============================================================================
+# Usage:
+#   Start:        docker-compose up -d
+#   Stop:         docker-compose down
+#   Build:        docker-compose build
+#   Logs:         docker-compose logs -f
+#   Restart:      docker-compose restart
+# =============================================================================
 
-  # Backend
+services:
+  # ===========================================================================
+  # Backend Service - Node.js + MediaSoup
+  # ===========================================================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: production
+    container_name: video-call-backend
+    restart: unless-stopped
     ports:
-      - "5000:5000"
-      - "10000-11000:10000-11000/udp"  # Mediasoup RTC ports (1000 ports for 300+ students)
+      - "5000:5000"           # HTTP API
+      - "10000-10100:10000-10100/udp"  # MediaSoup RTC ports
     environment:
-      - NODE_ENV=development
-      - PORT=5000
-      - FRONTEND_URL=http://localhost:3000
-      - MEDIASOUP_ANNOUNCED_IP=127.0.0.1
-      - MEDIASOUP_MIN_PORT=10000
-      - MEDIASOUP_MAX_PORT=11000
-      - JWT_SECRET=dev-secret-key
-      - REDIS_URL=redis://redis:6379
+      # Core settings
+      NODE_ENV: production
+      PORT: 5000
+      
+      # Database (use your Neon Cloud PostgreSQL)
+      DATABASE_URL: postgresql://neondb_owner:npg_Md8Lk6fromCY@ep-old-shadow-adhkxq37-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+      
+      # JWT Authentication
+      JWT_SECRET: video-call-super-secret-jwt-key-change-in-production-12345
+      JWT_EXPIRE: 7d
+      
+      # Redis (disabled for simplicity)
+      USE_REDIS: "false"
+      
+      # CORS (allow frontend)
+      CORS_ORIGIN: http://localhost:3000
+      
+      # MediaSoup WebRTC
+      MEDIASOUP_WORKER_COUNT: 4
+      MEDIASOUP_MIN_PORT: 10000
+      MEDIASOUP_MAX_PORT: 10100
+      MEDIASOUP_ANNOUNCED_IP: 127.0.0.1  # Change to your public IP for external access
+      
+      # Security
+      TRUST_PROXY: 1
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 1000
+    
     volumes:
-      - ./backend:/app
-      - /app/node_modules
-      - ./backend/uploads:/app/uploads
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+    
+    networks:
+      - video-call-network
+    
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===========================================================================
+  # Frontend Service - React + Nginx
+  # ===========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        # Build-time environment variables (baked into React build)
+        REACT_APP_API_URL: http://localhost:5000
+        REACT_APP_SOCKET_URL: http://localhost:5000
+    container_name: video-call-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:8080"  # Map host 3000 to container 8080 (nginx)
+    
     depends_on:
-      - redis
+      backend:
+        condition: service_healthy
+    
+    networks:
+      - video-call-network
+    
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  # Redis (for scaling Socket.IO)
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-
-  # Optional: MongoDB (if you need a database)
-  mongodb:
-    image: mongo:6
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-      - MONGO_INITDB_DATABASE=videocall
-    volumes:
-      - mongodb_data:/data/db
-
+# =============================================================================
+# Volumes - Persist data across container restarts
+# =============================================================================
 volumes:
-  redis_data:
-  mongodb_data:
+  backend-uploads:
+    driver: local
+  backend-logs:
+    driver: local
 
+# =============================================================================
+# Networks - Isolated network for services
+# =============================================================================
 networks:
-  default:
-    name: videocall-network
+  video-call-network:
+    driver: bridge
