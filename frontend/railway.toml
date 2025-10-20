@@ -1,0 +1,15 @@
+# Railway Frontend Configuration
+[build]
+builder = "NIXPACKS"
+
+[build.env]
+NODE_ENV = "production"
+GENERATE_SOURCEMAP = "false"
+
+[deploy]
+startCommand = "npx serve -s build -l $PORT"
+buildCommand = "npm install && npm run build"
+restartPolicyType = "ON_FAILURE"
+
+[deploy.env]
+NODE_ENV = "production"
