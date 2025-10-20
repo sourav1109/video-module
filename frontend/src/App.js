@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box, Container, Typography, Button } from '@mui/material';
+import { Box, Container, Typography, Button, Snackbar, Alert } from '@mui/material';
 import VideoCallRoom from './components/VideoCallRoom';
 import JoinRoom from './components/JoinRoom';
 import CreateRoom from './components/CreateRoom';
@@ -9,6 +9,7 @@ import TeacherDashboard from './components/TeacherDashboard';
 import StudentDashboard from './components/StudentDashboard';
 import { useVideoCall } from './contexts/VideoCallContext';
 import { initAuthCleanup, getValidToken } from './utils/authUtils';
+import authAPI from './services/authApi';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -34,6 +35,26 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
+
+  // Setup axios interceptors for auto-logout
+  useEffect(() => {
+    authAPI.setupInterceptors(() => {
+      handleLogout(true); // auto-logout flag
+    });
+  }, []);
+
+  // Token expiration warning
+  useEffect(() => {
+    window.showTokenExpirationWarning = (expiresIn) => {
+      const minutes = Math.floor(expiresIn / 60);
+      setNotification({
+        open: true,
+        message: `⚠️ Your session will expire in ${minutes} minute(s). Please save your work.`,
+        severity: 'warning'
+      });
+    };
+  }, []);
 
   useEffect(() => {
     // Clean up any invalid tokens on app start
@@ -49,6 +70,16 @@ function App() {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
         console.log('✅ User session restored');
+        
+        // Validate token on app load
+        authAPI.validateToken(savedToken).then(isValid => {
+          if (!isValid) {
+            console.warn('⚠️ Stored token is invalid, logging out');
+            handleLogout(true);
+          }
+        }).catch(() => {
+          handleLogout(true);
+        });
       } catch (error) {
         console.error('❌ Error loading user data:', error);
         localStorage.removeItem('token');
@@ -62,13 +93,49 @@ function App() {
   const handleLoginSuccess = (userData, authToken) => {
     setUser(userData);
     setToken(authToken);
+    localStorage.setItem('token', authToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+    
+    setNotification({
+      open: true,
+      message: '✅ Login successful!',
+      severity: 'success'
+    });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setToken(null);
+  const handleLogout = async (auto = false) => {
+    try {
+      if (token && !auto) {
+        // Call logout API to terminate session on server
+        await authAPI.logout(token);
+        console.log('✅ Logout successful');
+        
+        setNotification({
+          open: true,
+          message: '✅ Logged out successfully',
+          severity: 'info'
+        });
+      } else if (auto) {
+        setNotification({
+          open: true,
+          message: '⚠️ Session expired. Please login again.',
+          severity: 'warning'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+    } finally {
+      // Clear state and storage regardless of API success
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.clear();
+      setUser(null);
+      setToken(null);
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
   };
 
   return (
