@@ -1,14 +1,13 @@
-# Render Blueprint - Video Call Application
-# This blueprint deploys backend and frontend services
+# Render Blueprint Configuration
+# See: https://render.com/docs/blueprint-spec
 
 services:
-  # Backend API Service
   - type: web
     name: video-call-backend
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd backend && npm ci
+    buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
@@ -17,19 +16,17 @@ services:
         value: 5000
       - key: DATABASE_URL
         sync: false
-      - key: JWT_SECRET
-        generateValue: true
-      - key: USE_REDIS
-        value: false
 
-  # Frontend React Service  
   - type: web
     name: video-call-frontend
-    runtime: node
+    runtime: static
     region: oregon
-    plan: free
-    buildCommand: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && npm install -g serve && serve -s build -l 3000
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: REACT_APP_API_URL
         value: https://video-call-backend.onrender.com
