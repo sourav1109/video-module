@@ -28,6 +28,6 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_API_URL
-        value: https://video-call-backend.onrender.com
+        value: https://video-call-backend-nb87.onrender.com
       - key: REACT_APP_SOCKET_URL
-        value: https://video-call-backend.onrender.com
+        value: https://video-call-backend-nb87.onrender.com
