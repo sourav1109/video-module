@@ -96,7 +96,9 @@ const LiveIndicator = styled(Box)(({ theme }) => ({
   }
 }));
 
-const StudentLiveClassDashboard = ({ token, user }) => {
+const StudentLiveClassDashboard = ({ token, user, onLogout }) => {
+  const navigate = useNavigate();
+  
   // State management
   const [activeTab, setActiveTab] = useState(0);
   const [classes, setClasses] = useState([]);
@@ -337,7 +339,7 @@ const StudentLiveClassDashboard = ({ token, user }) => {
           startIcon={<LogoutIcon />}
           onClick={async () => {
             try {
-              await authAPI.logout(authToken);
+              await authAPI.logout(token);
               toast.success('Logged out successfully');
               if (onLogout) onLogout();
               navigate('/login');
